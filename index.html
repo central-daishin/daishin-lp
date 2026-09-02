@@ -309,6 +309,28 @@
     /* 交互セクション：上から柔らかい光 */
     .sec-alt{background:linear-gradient(180deg,#eef8f3 0%,#f6fcf8 100%)}
 
+    /* BLOG */
+    .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+    .blog-card{background:#fff;border-radius:20px;padding:26px 22px;box-shadow:var(--sh);border:1px solid rgba(15,58,42,0.08);cursor:pointer;transition:transform .22s,box-shadow .22s;overflow:hidden;position:relative}
+    .blog-card:hover{transform:translateY(-3px);box-shadow:var(--shl)}
+    .blog-card::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,0.22) 50%,transparent 80%);transform:skewX(-15deg);transition:left .65s ease;pointer-events:none;z-index:1}
+    .blog-card:hover::after{left:130%}
+    .blog-cat{display:inline-block;font-size:11px;font-weight:700;color:var(--gm);background:var(--gp);padding:3px 10px;border-radius:12px;margin-bottom:10px}
+    .blog-date{font-size:12px;color:var(--ts);margin-bottom:8px}
+    .blog-title{font-size:15px;font-weight:700;color:var(--gd);margin-bottom:10px;line-height:1.5}
+    .blog-summary{font-size:13px;color:var(--ts);line-height:1.75}
+    .blog-loading{text-align:center;color:var(--ts);padding:40px}
+    .blog-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+    .blog-modal.open{display:flex}
+    .blog-modal-inner{background:#fff;border-radius:24px;padding:40px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .blog-modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--ts);line-height:1}
+    .blog-modal-cat{display:inline-block;font-size:12px;font-weight:700;color:var(--gm);background:var(--gp);padding:4px 12px;border-radius:12px;margin-bottom:12px}
+    .blog-modal-date{font-size:13px;color:var(--ts);margin-bottom:8px}
+    .blog-modal-title{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:600;color:var(--gd);margin-bottom:20px;line-height:1.5}
+    .blog-modal-content{font-size:15px;color:var(--ts);line-height:2}
+    .blog-modal-content p{margin-bottom:12px}
+    .blog-modal-cta{display:inline-flex;align-items:center;gap:6px;background:var(--gp);color:var(--gd);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;text-decoration:none;margin-top:4px}
+
     /* RESPONSIVE */
     @media(max-width:640px){
       .nav{padding:10px 16px}
@@ -330,6 +352,9 @@
       .ar-wr{grid-template-columns:1fr}
       .rec-sec{padding:48px 20px}
       .cta h2{font-size:20px}
+      .blog-grid{grid-template-columns:1fr}
+      .blog-modal-inner{padding:28px 20px}
+      .blog-modal-title{font-size:18px}
     }
   </style>
 </head>
@@ -608,6 +633,17 @@
     </div>
   </div>
 
+  <!-- ブログ -->
+  <div class="sec sec-cr" id="blog">
+    <div class="label">スタッフブログ</div>
+    <h2 class="sec-title">訪問ケアの<br>お役立ち情報</h2>
+    <div class="divider"></div>
+    <p class="sec-sub">訪問マッサージ・はりきゅう・在宅リハビリに関する情報をスタッフがお届けします。</p>
+    <div class="blog-grid" id="blog-grid">
+      <p class="blog-loading">読み込み中...</p>
+    </div>
+  </div>
+
   <!-- CTA -->
   <div class="cta">
     <h2>まずはお気軽にご相談ください</h2>
@@ -630,9 +666,43 @@
 
 </div>
 
+<div class="blog-modal" id="blog-modal" onclick="if(event.target===this)closeBlog()">
+  <div class="blog-modal-inner">
+    <button class="blog-modal-close" onclick="closeBlog()">✕</button>
+    <div class="blog-modal-cat" id="modal-cat"></div>
+    <div class="blog-modal-date" id="modal-date"></div>
+    <h2 class="blog-modal-title" id="modal-title"></h2>
+    <div class="blog-modal-content" id="modal-content"></div>
+    <div style="text-align:center;margin-top:28px">
+      <a href="tel:0992139611" class="blog-modal-cta">📞 099-213-9611 お気軽にご相談ください</a>
+    </div>
+  </div>
+</div>
+
 <script>
 function showTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tab-pane').forEach((p,j)=>p.classList.toggle('active',i===j))}
 function toggleFaq(el){const a=el.nextElementSibling,ic=el.querySelector('.faq-ic');ic.textContent=a.classList.toggle('open')?'－':'＋'}
+async function loadBlog(){
+  try{
+    const res=await fetch('posts.json');
+    const data=await res.json();
+    const grid=document.getElementById('blog-grid');
+    if(!data.posts||data.posts.length===0){grid.innerHTML='<p class="blog-loading">記事を準備中です。</p>';return}
+    window._bp=data.posts;
+    grid.innerHTML=data.posts.map((p,i)=>`<div class="blog-card" onclick="openBlog(${i})"><div class="blog-cat">${p.category}</div><div class="blog-date">${p.date}</div><div class="blog-title">${p.title}</div><div class="blog-summary">${p.summary}</div></div>`).join('');
+  }catch(e){document.getElementById('blog-grid').innerHTML=''}
+}
+function openBlog(i){
+  const p=window._bp[i];
+  document.getElementById('modal-cat').textContent=p.category;
+  document.getElementById('modal-date').textContent=p.date;
+  document.getElementById('modal-title').textContent=p.title;
+  document.getElementById('modal-content').innerHTML=p.content;
+  document.getElementById('blog-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeBlog(){document.getElementById('blog-modal').classList.remove('open');document.body.style.overflow=''}
+loadBlog();
 </script>
 </body>
 </html>
