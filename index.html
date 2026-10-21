@@ -311,8 +311,8 @@
 
     /* BLOG */
     .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
-    .blog-card{background:#fff;border-radius:20px;padding:26px 22px;box-shadow:var(--sh);border:1px solid rgba(15,58,42,0.08);cursor:pointer;transition:transform .22s,box-shadow .22s;overflow:hidden;position:relative}
-    .blog-card:hover{transform:translateY(-3px);box-shadow:var(--shl)}
+    .blog-card{background:#fff;border-radius:20px;padding:26px 22px;box-shadow:var(--sh);border:1px solid rgba(15,58,42,0.08);transition:box-shadow .22s;overflow:hidden;position:relative}
+    .blog-card:hover{box-shadow:var(--shl)}
     .blog-card::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,0.22) 50%,transparent 80%);transform:skewX(-15deg);transition:left .65s ease;pointer-events:none;z-index:1}
     .blog-card:hover::after{left:130%}
     .blog-cat{display:inline-block;font-size:11px;font-weight:700;color:var(--gm);background:var(--gp);padding:3px 10px;border-radius:12px;margin-bottom:10px}
@@ -320,16 +320,12 @@
     .blog-title{font-size:15px;font-weight:700;color:var(--gd);margin-bottom:10px;line-height:1.5}
     .blog-summary{font-size:13px;color:var(--ts);line-height:1.75}
     .blog-loading{text-align:center;color:var(--ts);padding:40px}
-    .blog-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:20px}
-    .blog-modal.open{display:flex}
-    .blog-modal-inner{background:#fff;border-radius:24px;padding:40px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
-    .blog-modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--ts);line-height:1}
-    .blog-modal-cat{display:inline-block;font-size:12px;font-weight:700;color:var(--gm);background:var(--gp);padding:4px 12px;border-radius:12px;margin-bottom:12px}
-    .blog-modal-date{font-size:13px;color:var(--ts);margin-bottom:8px}
-    .blog-modal-title{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:600;color:var(--gd);margin-bottom:20px;line-height:1.5}
-    .blog-modal-content{font-size:15px;color:var(--ts);line-height:2}
-    .blog-modal-content p{margin-bottom:12px}
-    .blog-modal-cta{display:inline-flex;align-items:center;gap:6px;background:var(--gp);color:var(--gd);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;text-decoration:none;margin-top:4px}
+    .blog-body{display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--bd);font-size:14px;color:var(--ts);line-height:1.9}
+    .blog-body.open{display:block}
+    .blog-body p{margin-bottom:10px}
+    .blog-toggle{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--gm);background:none;border:none;cursor:pointer;padding:10px 0 0;margin-top:4px}
+    .blog-toggle:hover{color:var(--gd)}
+    .blog-card-cta{display:inline-flex;align-items:center;gap:6px;background:var(--gp);color:var(--gd);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;text-decoration:none;margin-top:12px}
 
     /* RESPONSIVE */
     @media(max-width:640px){
@@ -353,8 +349,6 @@
       .rec-sec{padding:48px 20px}
       .cta h2{font-size:20px}
       .blog-grid{grid-template-columns:1fr}
-      .blog-modal-inner{padding:28px 20px}
-      .blog-modal-title{font-size:18px}
     }
   </style>
 </head>
@@ -666,19 +660,6 @@
 
 </div>
 
-<div class="blog-modal" id="blog-modal" onclick="if(event.target===this)closeBlog()">
-  <div class="blog-modal-inner">
-    <button class="blog-modal-close" onclick="closeBlog()">✕</button>
-    <div class="blog-modal-cat" id="modal-cat"></div>
-    <div class="blog-modal-date" id="modal-date"></div>
-    <h2 class="blog-modal-title" id="modal-title"></h2>
-    <div class="blog-modal-content" id="modal-content"></div>
-    <div style="text-align:center;margin-top:28px">
-      <a href="tel:0992139611" class="blog-modal-cta">📞 099-213-9611 お気軽にご相談ください</a>
-    </div>
-  </div>
-</div>
-
 <script>
 function showTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tab-pane').forEach((p,j)=>p.classList.toggle('active',i===j))}
 function toggleFaq(el){const a=el.nextElementSibling,ic=el.querySelector('.faq-ic');ic.textContent=a.classList.toggle('open')?'－':'＋'}
@@ -688,20 +669,14 @@ async function loadBlog(){
     const data=await res.json();
     const grid=document.getElementById('blog-grid');
     if(!data.posts||data.posts.length===0){grid.innerHTML='<p class="blog-loading">記事を準備中です。</p>';return}
-    window._bp=data.posts;
-    grid.innerHTML=data.posts.map((p,i)=>`<div class="blog-card" onclick="openBlog(${i})"><div class="blog-cat">${p.category}</div><div class="blog-date">${p.date}</div><div class="blog-title">${p.title}</div><div class="blog-summary">${p.summary}</div></div>`).join('');
+    grid.innerHTML=data.posts.map((p,i)=>`<div class="blog-card"><div class="blog-cat">${p.category}</div><div class="blog-date">${p.date}</div><div class="blog-title">${p.title}</div><div class="blog-summary">${p.summary}</div><div class="blog-body" id="blog-body-${i}">${p.content}<div style="text-align:center;margin-top:16px"><a href="tel:0992139611" class="blog-card-cta">📞 お気軽にご相談ください</a></div></div><button class="blog-toggle" onclick="toggleBlog(${i},this)">続きを読む ▼</button></div>`).join('');
   }catch(e){document.getElementById('blog-grid').innerHTML=''}
 }
-function openBlog(i){
-  const p=window._bp[i];
-  document.getElementById('modal-cat').textContent=p.category;
-  document.getElementById('modal-date').textContent=p.date;
-  document.getElementById('modal-title').textContent=p.title;
-  document.getElementById('modal-content').innerHTML=p.content;
-  document.getElementById('blog-modal').classList.add('open');
-  document.body.style.overflow='hidden';
+function toggleBlog(i,btn){
+  const body=document.getElementById('blog-body-'+i);
+  const open=body.classList.toggle('open');
+  btn.textContent=open?'閉じる ▲':'続きを読む ▼';
 }
-function closeBlog(){document.getElementById('blog-modal').classList.remove('open');document.body.style.overflow=''}
 loadBlog();
 </script>
 </body>
